@@ -1,336 +1,194 @@
-# multimodal-BD-Detection
-
-Multimodal Mental Health Classification Pipeline
-
-Overview
-
-This repository contains a Python-based pipeline for classifying mental health states (Depression, Mania, Euthymia) using multimodal data (text, audio, video) with a deep learning approach. The project leverages PyTorch to build and train a transformer-based model, incorporating temporal sequence data and data augmentation to improve performance. The pipeline is designed for research purposes and aims to support clinical validation and deployment with continuous improvements.
-
-
-
-
-
-Current Status: As of August 23, 2025, the pipeline is functional, achieving a test accuracy of 0.7565 and a macro F1-score of 0.6918. However, it requires enhancements to address low depression recall (0.241) and euthymia precision (0.637).
-
-
-
-Goal: Develop a robust, clinically validated model for mental health detection, suitable for publication and real-world application.
-
-Features
-
-
-
-
-
-Multimodal input processing (text, audio, video).
-
-
-
-Temporal sequence modeling using transformers.
-
-
-
-Data cleaning, augmentation, and quality analysis.
-
-
-
-Weighted loss for class imbalance handling.
-
-
-
-Comprehensive evaluation with confusion matrices, F1-scores, and sequence analysis.
-
-
-
-Early stopping and model checkpointing.
-
-Requirements
-
-
-
-
-
-Python: 3.8+
-
-
-
-Dependencies:
-
-
-
-
-
-torch>=1.13.0
-
-
-
-numpy>=1.21.0
-
-
-
-scikit-learn>=1.0.0
-
-
-
-matplotlib>=3.5.0
-
-
-
-seaborn>=0.11.0
-
-
-
-scipy>=1.7.0
-
-
-
-Hardware: GPU recommended for training (e.g., NVIDIA with CUDA support).
-
-Installation
-
-
-
-
-
-Clone the Repository:
-
-git clone https://github.com/yourusername/multimodal-mental-health.git
-cd multimodal-mental-health
-
-
-
-Set Up a Virtual Environment:
-
-python -m venv myenv
-source myenv/bin/activate  # On Windows: myenv\Scripts\activate
-
-
-
-Install Dependencies:
-
-pip install -r requirements.txt
-
-(Create a requirements.txt file with the listed dependencies if not already present.)
-
-
-
-Prepare Data:
-
-
-
-
-
-Place your multimodal dataset (e.g., JSONL files with user_id, text, audio, video, label, timestamp) in the data/ directory.
-
-
-
-Ensure the data format matches the expected schema in configs/config.py.
-
-
-
-Configure Settings:
-
-
-
-
-
-Edit configs/config.py to adjust hyperparameters (e.g., sequence_length, batch_size, device).
-
-Usage
-
-Running the Pipeline
-
-
-
-
-
-Train and Evaluate the Model:
-
+# Multimodal Mental Health Classification (multimodal-BD-Detection)
+
+A **deep learning pipeline** for classifying mental health states—**Depression, Mania, Euthymia**—using **multimodal data** (text, audio, video).  
+The project is built with **PyTorch** and designed for **research and clinical validation**.
+
+---
+
+## 🚀 Overview
+This repository provides a Python-based pipeline that integrates:
+- Transformer-based **temporal sequence modeling**
+- **Data augmentation** and quality analysis
+- Handling of **class imbalance**
+- Comprehensive **evaluation metrics**
+
+**Current Status (Aug 23, 2025):**
+- ✅ Functional pipeline
+- 📊 Test Accuracy: **0.7565**
+- 📊 Macro F1-score: **0.6918**
+- ⚠️ Gaps: Low depression recall (**0.241**) and low euthymia precision (**0.637**)
+
+**Goal:** Develop a robust, clinically validated model for mental health detection suitable for **publication** and **real-world application**.
+
+---
+
+## ✨ Features
+- Multimodal input (text, audio, video)  
+- Transformer-based temporal modeling  
+- Data cleaning, augmentation, and quality checks  
+- Weighted loss for class imbalance  
+- Evaluation: F1-scores, confusion matrices, sequence-level metrics  
+- Early stopping & model checkpointing  
+
+---
+
+## ⚙️ Requirements
+- **Python**: 3.8+
+- **Dependencies**:
+  - `torch>=1.13.0`
+  - `numpy>=1.21.0`
+  - `scikit-learn>=1.0.0`
+  - `matplotlib>=3.5.0`
+  - `seaborn>=0.11.0`
+  - `scipy>=1.7.0`
+- **Hardware**: GPU recommended (NVIDIA + CUDA)
+
+---
+
+## 📥 Installation
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/yourusername/multimodal-mental-health.git
+   cd multimodal-mental-health
+   ```
+
+2. **Set Up Virtual Environment**
+   ```bash
+   python -m venv myenv
+   source myenv/bin/activate   # Windows: myenv\Scripts\activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Prepare Data**
+   - Place your dataset in `data/` (JSONL format with `user_id`, `text`, `audio`, `video`, `label`, `timestamp`).
+   - Ensure the format matches the schema in `configs/config.py`.
+
+5. **Configure Settings**
+   - Edit `configs/config.py` for hyperparameters (e.g., sequence length, batch size, device).
+
+---
+
+## ▶️ Usage
+
+### Train & Evaluate
+```bash
 python scripts/run_pipeline.py
+```
+- Trains, validates, and evaluates the model.
+- Results saved as:
+  - `improved_results_summary.pkl`
+  - `improved_results_summary.json`
+  - Evaluation plots: `evaluation_results.png`
 
+### Expected Outputs
+- Training logs (loss, F1-scores per epoch)
+- Evaluation metrics & confusion matrices
+- Console + saved summaries
 
+---
 
-
-
-This script trains the model, validates it, and evaluates performance on the test set.
-
-
-
-Results are saved as improved_results_summary.pkl and improved_results_summary.json.
-
-
-
-Expected Output:
-
-
-
-
-
-Training logs (e.g., epoch-wise loss, F1-scores).
-
-
-
-Evaluation plots (evaluation_results.png).
-
-
-
-Summary metrics in the console and saved files.
-
-Example Configuration
-
-# configs/config.py
+## 🛠 Example Config (`configs/config.py`)
+```python
 class Config:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     batch_size = 32
     sequence_length = 8
     min_sequence_length = 3
     num_classes = 3
+
     text_dim = 768
     audio_dim = 128
     video_dim = 512
     hidden_dim = 256
+
     num_heads = 4
     num_transformer_layers = 2
     dropout_rate = 0.5
+
     use_data_augmentation = True
     noise_factor = 0.1
     dropout_augmentation_rate = 0.2
+```
 
-File Structure
+---
 
+## 📂 File Structure
+```bash
 multimodal-mental-health/
-├── data/                  # Input dataset (e.g., JSONL files)
-├── configs/               # Configuration files
-│   └── config.py          # Hyperparameters and settings
+├── data/                  # Input dataset
+├── configs/               # Config files (e.g., config.py)
 ├── models/                # Model definitions
-│   └── multimodal_model.py # Multimodal transformer model
-├── dataset/               # Data handling
-│   └── dataset.py         # Dataset class with sequence creation
-├── quality/               # Data quality and cleaning
-│   └── quality.py         # Data quality analyzer and cleaner
-├── evaluator/             # Evaluation metrics
-│   └── evaluator.py       # Evaluation class with plotting
-├── scripts/               # Main scripts
-│   └── run_pipeline.py    # Main training and evaluation script
+│   └── multimodal_model.py
+├── dataset/               # Dataset handling
+│   └── dataset.py
+├── quality/               # Data quality checks
+│   └── quality.py
+├── evaluator/             # Evaluation utilities
+│   └── evaluator.py
+├── scripts/               # Training scripts
+│   └── run_pipeline.py
 ├── trainer/               # Training logic
-│   └── trainer.py         # Training class with early stopping
-├── requirements.txt       # Python dependencies
-├── README.md              # This file
-├── improved_results_summary.pkl  # Saved evaluation results
-└── evaluation_results.png  # Evaluation plots
+│   └── trainer.py
+├── requirements.txt
+├── README.md
+├── improved_results_summary.pkl
+└── evaluation_results.png
+```
 
-Contributing
+---
 
+## 🤝 Contributing
 
+1. **Fork the Repository**
+   ```bash
+   git checkout -b feature/your-feature
+   ```
 
+2. **Make Changes**
+   - Follow PEP 8.
+   - Add tests where possible.
 
+3. **Commit & Push**
+   ```bash
+   git commit -m "Add feature description"
+   git push origin feature/your-feature
+   ```
 
-Fork the Repository:
+4. **Open a Pull Request**
 
+---
 
+## ⚠️ Known Issues
+- **Data Loss**: ~58.4% removed due to aggressive cleaning (0 users with ≥2 posts remain).
+- **Class Imbalance**: Depression recall (0.241) and euthymia precision (0.637) remain low.
+- **Scalability**: Assumes static dataset; real-time support pending.
 
+---
 
+## 🔮 Future Work
+- Improve cleaning to preserve multi-post users.
+- Class-specific augmentation (esp. for depression).
+- Temporal feature engineering (e.g., time gaps).
+- Learning rate scheduling for convergence.
+- Clinical validation with experts.
 
-Create a personal fork and clone it locally.
+---
 
+## 📜 License
+This project is licensed under the MIT License. See the LICENSE file.
 
+---
 
-Create a Branch:
+## 🙏 Acknowledgments
+- Built with support from xAI and community contributions.
+- Inspired by recent advances in multimodal mental health research.
 
-git checkout -b feature/your-feature-name
+---
 
-
-
-Make Changes:
-
-
-
-
-
-Follow the coding style (PEP 8) and add tests if applicable.
-
-
-
-Commit Changes:
-
-git commit -m "Add your feature description"
-
-
-
-Push and Submit a Pull Request:
-
-
-
-
-
-Push to your fork and open a PR against the main repository.
-
-
-
-Code Review:
-
-
-
-
-
-Expect feedback and iterate as needed.
-
-Known Issues and Limitations
-
-
-
-
-
-Data Loss: 58.4% data removal due to aggressive cleaning, resulting in 0 users with 2+ posts.
-
-
-
-Class Imbalance: Low depression recall (0.241) and low euthymia precision (0.637) indicate performance gaps.
-
-
-
-Scalability: Current implementation assumes a fixed dataset; real-time updates need integration.
-
-Future Work
-
-
-
-
-
-Enhance data cleaning to retain more multi-post users.
-
-
-
-Implement class-specific augmentation for depression.
-
-
-
-Add temporal feature engineering (e.g., time gaps).
-
-
-
-Integrate learning rate scheduling for better convergence.
-
-
-
-Conduct clinical validation with mental health experts.
-
-License
-
-This project is licensed under the MIT License. See the LICENSE file for details (create one if not present).
-
-Acknowledgments
-
-
-
-
-
-Built with support from xAI and community feedback.
-
-
-
-Inspired by advances in multimodal learning for mental health research.
-
-Contact
-
-For questions or collaboration, contact d15645415@gmail.com.
+## 📧 Contact
+For questions or collaborations: d15645415@gmail.com
