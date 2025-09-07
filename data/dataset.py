@@ -21,7 +21,7 @@ class ImprovedTemporalDataset(Dataset):
         self.config = config
         self.mode = mode
         
-        # Ensure required attributes exist
+        # Ensure attributes exist
         self.config.min_user_posts = getattr(config, 'min_user_posts', 2)
         self.config.overlap_ratio = getattr(config, 'overlap_ratio', 0.25)
         self.config.use_data_augmentation = getattr(config, 'use_data_augmentation', True)
@@ -46,7 +46,7 @@ class ImprovedTemporalDataset(Dataset):
         
         for item in data_list:
             try:
-                # Ensure required fields exist
+                # user_id fallback
                 if 'user_id' not in item:
                     if 'User_ID' in item:
                         item['user_id'] = item['User_ID']
@@ -57,34 +57,34 @@ class ImprovedTemporalDataset(Dataset):
                 if 'text' not in item:
                     item['text'] = torch.zeros(self.config.text_dim)
                 elif not isinstance(item['text'], torch.Tensor):
-                    item['text'] = torch.zeros(self.config.text_dim)
+                    item['text'] = torch.tensor(item['text'], dtype=torch.float32)
                 
                 # Ensure audio features
                 if 'audio' not in item:
                     item['audio'] = torch.zeros(self.config.audio_dim)
                 elif not isinstance(item['audio'], torch.Tensor):
-                    if isinstance(item['audio'], list):
-                        item['audio'] = torch.tensor(item['audio'], dtype=torch.float32)
-                    else:
-                        item['audio'] = torch.zeros(self.config.audio_dim)
+                    item['audio'] = torch.tensor(item['audio'], dtype=torch.float32)
                 
                 # Ensure video features
                 if 'video' not in item:
                     item['video'] = torch.zeros(self.config.video_dim)
                 elif not isinstance(item['video'], torch.Tensor):
-                    if isinstance(item['video'], list):
-                        item['video'] = torch.tensor(item['video'], dtype=torch.float32)
-                    else:
-                        item['video'] = torch.zeros(self.config.video_dim)
+                    item['video'] = torch.tensor(item['video'], dtype=torch.float32)
                 
-                # Ensure label
+                # NEW: Ensure physio features
+                if 'physio' not in item:
+                    item['physio'] = torch.zeros(self.config.physio_dim)
+                elif not isinstance(item['physio'], torch.Tensor):
+                    item['physio'] = torch.tensor(item['physio'], dtype=torch.float32)
+                
+                # Label fallback
                 if 'label' not in item:
                     if 'Label' in item:
                         item['label'] = item['Label']
                     else:
                         item['label'] = 0
                 
-                # Ensure timestamp
+                # Timestamp fallback
                 if 'timestamp' not in item:
                     if 'Timestamp' in item:
                         item['timestamp'] = item['Timestamp']
@@ -114,13 +114,11 @@ class ImprovedTemporalDataset(Dataset):
         sequences = []
         
         # Process users with multiple posts
-        multi_post_users = {uid: data for uid, data in user_data.items()
-                           if len(data) >= self.config.min_user_posts}
+        multi_post_users = {uid: data for uid, data in user_data.items() if len(data) >= self.config.min_user_posts}
         
         logger.info(f"Found {len(multi_post_users)} users with {self.config.min_user_posts}+ posts")
 
         for user_id, user_posts in multi_post_users.items():
-            # Sort by timestamp
             user_posts.sort(key=lambda x: x[1].get('timestamp', 0))
             indices = [x[0] for x in user_posts]
             
@@ -130,11 +128,8 @@ class ImprovedTemporalDataset(Dataset):
                 
                 for start in range(0, len(indices) - seq_len + 1, step_size):
                     sequence_indices = indices[start:start + seq_len]
-                    
-                    # Pad with last index if needed
                     while len(sequence_indices) < self.config.sequence_length:
                         sequence_indices.append(sequence_indices[-1])
-                    
                     sequences.append({
                         'indices': sequence_indices,
                         'user_id': user_id,
@@ -142,12 +137,10 @@ class ImprovedTemporalDataset(Dataset):
                         'type': 'user_based'
                     })
 
-        # Create pseudo-sequences from single posts if needed
-        if len(sequences) < 1000:  # Threshold for creating pseudo sequences
-            single_post_users = {uid: data for uid, data in user_data.items()
-                               if len(data) < self.config.min_user_posts}
+        # Pseudo sequences creation (optional)
+        if len(sequences) < 1000:
+            single_post_users = {uid: data for uid, data in user_data.items() if len(data) < self.config.min_user_posts}
             
-            # Group by label for pseudo-temporal sequences
             label_groups = defaultdict(list)
             for user_id, user_posts in single_post_users.items():
                 for idx, item in user_posts:
@@ -155,18 +148,15 @@ class ImprovedTemporalDataset(Dataset):
                     label_groups[label].append(idx)
 
             for label, indices in label_groups.items():
-                # Sort by timestamp and add randomness
                 indices.sort(key=lambda x: self.data[x].get('timestamp', 0))
                 np.random.shuffle(indices)
                 
                 for start in range(0, len(indices) - self.config.min_sequence_length + 1,
                                 self.config.sequence_length):
                     sequence_indices = indices[start:start + self.config.sequence_length]
-                    
                     if len(sequence_indices) >= self.config.min_sequence_length:
                         while len(sequence_indices) < self.config.sequence_length:
                             sequence_indices.append(sequence_indices[-1])
-                        
                         sequences.append({
                             'indices': sequence_indices,
                             'user_id': f'pseudo_label_{label}',
@@ -182,49 +172,43 @@ class ImprovedTemporalDataset(Dataset):
 
     def _augment_sequence(self, text_features: torch.Tensor,
                          audio_features: torch.Tensor,
-                         video_features: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+                         video_features: torch.Tensor,
+                         physio_features: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Apply data augmentation to sequences safely"""
-        
+
         if not self.config.use_data_augmentation or self.mode != 'train':
-            return text_features, audio_features, video_features
+            return text_features, audio_features, video_features, physio_features
 
         try:
-            # Noise augmentation
             if np.random.random() < 0.5:
                 noise_factor = self.config.noise_factor * 2
                 text_features = text_features + torch.randn_like(text_features) * noise_factor
                 audio_features = audio_features + torch.randn_like(audio_features) * noise_factor
                 video_features = video_features + torch.randn_like(video_features) * noise_factor
+                physio_features = physio_features + torch.randn_like(physio_features) * noise_factor
 
-            # Dropout augmentation
             if np.random.random() < 0.3:
                 dropout_rate = self.config.dropout_augmentation_rate * 1.5
+                keep_prob = 1.0 - dropout_rate
                 
-                # Safe dropout using multiplication instead of boolean indexing
-                text_keep_prob = 1.0 - dropout_rate
-                audio_keep_prob = 1.0 - dropout_rate
-                video_keep_prob = 1.0 - dropout_rate
+                def apply_mask(features):
+                    mask = torch.bernoulli(torch.full_like(features, keep_prob))
+                    return features * mask
                 
-                text_mask = torch.bernoulli(torch.full_like(text_features, text_keep_prob))
-                audio_mask = torch.bernoulli(torch.full_like(audio_features, audio_keep_prob))
-                video_mask = torch.bernoulli(torch.full_like(video_features, video_keep_prob))
-                
-                text_features = text_features * text_mask
-                audio_features = audio_features * audio_mask
-                video_features = video_features * video_mask
+                text_features = apply_mask(text_features)
+                audio_features = apply_mask(audio_features)
+                video_features = apply_mask(video_features)
+                physio_features = apply_mask(physio_features)
 
         except Exception as e:
             logger.warning(f"Augmentation failed: {e}. Using original features.")
         
-        return text_features, audio_features, video_features
+        return text_features, audio_features, video_features, physio_features
 
     def get_class_weights(self) -> torch.Tensor:
-        """Calculate balanced class weights based on sequence labels"""
-        
         labels = []
         for seq in self.sequences:
             try:
-                # Get majority label from sequence
                 seq_labels = [self.data[i]['label'] for i in seq['indices'] if i < len(self.data)]
                 if seq_labels:
                     majority_label = Counter(seq_labels).most_common(1)[0][0]
@@ -232,38 +216,33 @@ class ImprovedTemporalDataset(Dataset):
             except Exception as e:
                 logger.warning(f"Error getting sequence label: {e}")
                 continue
-
+        
         if not labels:
-            # Return uniform weights if no labels found
             return torch.ones(self.config.num_classes, dtype=torch.float32)
-
+        
         class_counts = Counter(labels)
         total_samples = len(labels)
-
-        # Calculate inverse frequency weights
         weights = []
         for i in range(self.config.num_classes):
-            count = class_counts.get(i, 1)  # Avoid division by zero
+            count = class_counts.get(i, 1)
             weight = total_samples / (self.config.num_classes * count)
             weights.append(weight)
-
+        
         weights = torch.tensor(weights, dtype=torch.float32)
-        return weights / weights.sum() * self.config.num_classes  # Normalize
+        return weights / weights.sum() * self.config.num_classes
 
     def __len__(self) -> int:
         return len(self.sequences)
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
-        """Get a single sequence by index"""
-        
         try:
             sequence_info = self.sequences[idx]
             indices = sequence_info['indices']
 
-            # Extract features and labels safely
             text_features = []
             audio_features = []
             video_features = []
+            physio_features = []
             labels = []
 
             for i in indices:
@@ -272,83 +251,72 @@ class ImprovedTemporalDataset(Dataset):
                     text_features.append(item['text'])
                     audio_features.append(item['audio'])
                     video_features.append(item['video'])
+                    physio_features.append(item.get('physio', torch.zeros(self.config.physio_dim)))
                     labels.append(item['label'])
                 else:
-                    # Pad with zeros if index is out of range
                     text_features.append(torch.zeros(self.config.text_dim))
                     audio_features.append(torch.zeros(self.config.audio_dim))
                     video_features.append(torch.zeros(self.config.video_dim))
+                    physio_features.append(torch.zeros(self.config.physio_dim))
                     labels.append(0)
 
-            # Stack tensors
             text_features = torch.stack(text_features)
             audio_features = torch.stack(audio_features)
             video_features = torch.stack(video_features)
+            physio_features = torch.stack(physio_features)
             labels = torch.tensor(labels, dtype=torch.long)
 
-            # Apply augmentation
-            text_features, audio_features, video_features = self._augment_sequence(
-                text_features, audio_features, video_features
+            text_features, audio_features, video_features, physio_features = self._augment_sequence(
+                text_features, audio_features, video_features, physio_features
             )
 
-            # Determine sequence label (majority vote)
             sequence_label = Counter(labels.tolist()).most_common(1)[0][0]
 
             return {
                 'text': text_features,
                 'audio': audio_features,
                 'video': video_features,
+                'physio': physio_features,
                 'labels': labels,
                 'sequence_label': torch.tensor(sequence_label, dtype=torch.long),
                 'sequence_type': sequence_info.get('type', 'unknown'),
                 'user_id': sequence_info.get('user_id', 'unknown')
             }
-            
         except Exception as e:
             logger.error(f"Error getting item {idx}: {e}")
-            
-            # Return dummy data to prevent complete failure
             return {
                 'text': torch.zeros(self.config.sequence_length, self.config.text_dim),
                 'audio': torch.zeros(self.config.sequence_length, self.config.audio_dim),
                 'video': torch.zeros(self.config.sequence_length, self.config.video_dim),
+                'physio': torch.zeros(self.config.sequence_length, self.config.physio_dim),
                 'labels': torch.zeros(self.config.sequence_length, dtype=torch.long),
                 'sequence_label': torch.tensor(0, dtype=torch.long),
                 'sequence_type': 'error',
                 'user_id': 'error'
             }
 
-
 def create_improved_data_loader(dataset, batch_size, shuffle=False, use_sampler=False):
-    """Create improved data loader with safe collation"""
-    
     from torch.utils.data import DataLoader
     
     return DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=shuffle and not use_sampler,
-        num_workers=0,  # Avoid multiprocessing issues
-        pin_memory=False,  # Disable for stability
+        num_workers=0,
+        pin_memory=False,
         drop_last=False
     )
 
-
 def create_improved_user_split(full_data, train_ratio=0.7, val_ratio=0.15):
-    """Create improved user-based data splits"""
-    
-    # Group by user
     user_data = defaultdict(list)
     for item in full_data:
         user_id = item.get('user_id', item.get('User_ID', 'unknown'))
         user_data[user_id].append(item)
     
-    # Get unique users
     users = list(user_data.keys())
-    np.random.seed(42)  # For reproducibility
+    np.random.seed(42)
     np.random.shuffle(users)
     
-    # Split users
     n_users = len(users)
     train_end = int(train_ratio * n_users)
     val_end = int((train_ratio + val_ratio) * n_users)
@@ -357,28 +325,17 @@ def create_improved_user_split(full_data, train_ratio=0.7, val_ratio=0.15):
     val_users = users[train_end:val_end]
     test_users = users[val_end:]
     
-    # Create data splits
-    train_data = []
-    val_data = []
-    test_data = []
+    logger.info(f"User split - Train: {len(train_users)} users ({sum(len(user_data[u]) for u in train_users)} samples)")
+    logger.info(f"User split - Val: {len(val_users)} users ({sum(len(user_data[u]) for u in val_users)} samples)")
+    logger.info(f"User split - Test: {len(test_users)} users ({sum(len(user_data[u]) for u in test_users)} samples)")
     
-    for user in train_users:
-        train_data.extend(user_data[user])
-    for user in val_users:
-        val_data.extend(user_data[user])
-    for user in test_users:
-        test_data.extend(user_data[user])
-    
-    logger.info(f"User split - Train: {len(train_users)} users ({len(train_data)} samples)")
-    logger.info(f"User split - Val: {len(val_users)} users ({len(val_data)} samples)")
-    logger.info(f"User split - Test: {len(test_users)} users ({len(test_data)} samples)")
+    train_data = [item for u in train_users for item in user_data[u]]
+    val_data = [item for u in val_users for item in user_data[u]]
+    test_data = [item for u in test_users for item in user_data[u]]
     
     return train_data, val_data, test_data
 
-
 def analyze_data_distribution(data):
-    """Analyze data distribution for insights"""
-    
     analysis = {
         'total_samples': len(data),
         'users': len(set(item.get('user_id', item.get('User_ID', 'unknown')) for item in data)),
@@ -388,22 +345,15 @@ def analyze_data_distribution(data):
     logger.info(f"Data analysis: {analysis}")
     return analysis
 
-
 def suggest_hyperparameters(analysis):
-    """Suggest hyperparameters based on data analysis"""
-    
     suggestions = {
         'batch_size': min(32, max(8, analysis['total_samples'] // 100)),
         'learning_rate': 1e-4 if analysis['total_samples'] > 1000 else 5e-4,
         'epochs': min(100, max(20, analysis['total_samples'] // 50))
     }
-    
     return suggestions
 
-
 def create_data_quality_dashboard(analysis):
-    """Create a simple data quality dashboard"""
-    
     logger.info("=== DATA QUALITY DASHBOARD ===")
     logger.info(f"Total samples: {analysis['total_samples']}")
     logger.info(f"Unique users: {analysis['users']}")
