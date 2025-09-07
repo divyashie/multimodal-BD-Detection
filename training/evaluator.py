@@ -96,17 +96,22 @@ class ImprovedEvaluator:
         precision_weighted = precision_score(y_true, y_pred, average='weighted', zero_division=0)
         recall_weighted = recall_score(y_true, y_pred, average='weighted', zero_division=0)
 
+       # Determine which classes are present
+        unique_labels = sorted(list(set(y_true)))
+        present_class_names = [class_names[i] for i in unique_labels]
+
         # Per-class metrics
-        f1_per_class = f1_score(y_true, y_pred, average=None, zero_division=0)
-        precision_per_class = precision_score(y_true, y_pred, average=None, zero_division=0)
-        recall_per_class = recall_score(y_true, y_pred, average=None, zero_division=0)
+        f1_per_class = f1_score(y_true, y_pred, labels=unique_labels, average=None, zero_division=0)
+        precision_per_class = precision_score(y_true, y_pred, labels=unique_labels, average=None, zero_division=0)
+        recall_per_class = recall_score(y_true, y_pred, labels=unique_labels, average=None, zero_division=0)
 
         # Confusion matrix
         cm = confusion_matrix(y_true, y_pred)
 
-        # Classification report
-        report = classification_report(y_true, y_pred, target_names=class_names,
-                                     output_dict=True, zero_division=0)
+        # Classification report only for present classes
+        report = classification_report(y_true, y_pred, labels=unique_labels,
+                                    target_names=present_class_names,
+                                    output_dict=True, zero_division=0)
 
         return {
             'accuracy': accuracy,
@@ -248,7 +253,13 @@ class ImprovedEvaluator:
 
         # Per-class F1 scores
         f1_scores = f1_score(y_true, y_pred, average=None, zero_division=0)
-        bars = ax4.bar(class_names, f1_scores, alpha=0.8)
+        
+        # Determine classes present in the batch
+        unique_labels = sorted(list(set(y_true)))
+        f1_scores = f1_score(y_true, y_pred, labels=unique_labels, average=None, zero_division=0)
+        plot_class_names = [class_names[i] for i in unique_labels]
+
+        bars = ax4.bar(plot_class_names, f1_scores, alpha=0.8)
         ax4.set_title('F1-Score per Class')
         ax4.set_xlabel('Classes')
         ax4.set_ylabel('F1-Score')
