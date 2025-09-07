@@ -1,12 +1,7 @@
 import torch
 import logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 class Config:
-    """Enhanced model and training configuration with validation."""
-
     # Data configuration
     data_path = 'processed_mental_health_data_fixed.pkl'
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -30,7 +25,7 @@ class Config:
     num_transformer_layers = 2
 
     # Training configuration
-    num_epochs = 50
+    num_epochs = 50  # renamed from max_epochs
     batch_size = 16
     learning_rate = 5e-5
     weight_decay = 1e-4
@@ -50,9 +45,15 @@ class Config:
 
     @classmethod
     def validate(cls):
-        """Validate configuration parameters."""
-        assert cls.sequence_length > cls.min_sequence_length
-        assert cls.min_user_posts >= 1
-        assert 0 < cls.overlap_ratio < 1
-        assert 0 < cls.dropout_rate < 1
-        logger.info("Configuration validated successfully")
+        """Validate configuration consistency"""
+        assert cls.sequence_length > cls.min_sequence_length, (
+            f"sequence_length ({cls.sequence_length}) must be greater than min_sequence_length ({cls.min_sequence_length})"
+        )
+        assert cls.min_user_posts >= 1, "min_user_posts must be at least 1"
+        assert 0 < cls.overlap_ratio < 1, "overlap_ratio must be between 0 and 1"
+        assert 0 < cls.dropout_rate < 1, "dropout_rate must be between 0 and 1"
+        assert cls.num_epochs > 0, "num_epochs must be positive"
+        assert cls.batch_size > 0, "batch_size must be positive"
+        assert cls.learning_rate > 0, "learning_rate must be positive"
+        assert cls.num_classes > 0, "num_classes must be positive"
+        logging.info("✅ Configuration validated successfully")
