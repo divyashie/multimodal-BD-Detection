@@ -310,15 +310,17 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ┌─────────────────────────────────────────────────────┐
 │                 PERFORMANCE METRICS                 │
 ├─────────────────────────────────────────────────────┤
-│ Overall Accuracy:           99.33% (Excellent ✅)   │
-│ Weighted F1-Score:          99.34% (Excellent ✅)   │  
-│ Macro F1-Score:             98.48% (Excellent ✅)   │
-│ Average Confidence:         95.8%  (High ✅)        │
+│ Overall Accuracy:           99.29% (Excellent ✅)   │
+│ Weighted F1-Score:          99.29% (Excellent ✅)   │  
+│ Macro F1-Score:             98.37% (Excellent ✅)   │
+│ Average Confidence:         93.8%  (High ✅)        │
 │ High-confidence Errors:     13     (Minimal ✅)     │
+│ Training Epochs:            23     (Early Stop ✅)   │
 └─────────────────────────────────────────────────────┘
 
 🏥 CLINICAL READINESS: VALIDATION PHASE ✅
-📈 IMPROVEMENT FROM BASELINE: +23.68% accuracy
+🫀 WESAD INTEGRATION: PHYSIOLOGICAL VALIDATION ✅  
+📈 IMPROVEMENT FROM BASELINE: +23.64% accuracy
 🚀 DEPLOYMENT RECOMMENDATION: PROCEED WITH VALIDATION
 ```
 
