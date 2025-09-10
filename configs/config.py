@@ -1,64 +1,50 @@
 import torch
 import logging
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s') 
+
 class Config:
-    # Data configuration
-    data_path = 'processed_mental_health_data_fixed.pkl'
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    data_path: str = 'processed_mental_health_data_fixed.pkl'
+    device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    num_classes: int = 3
+    text_dim: int = 768
+    audio_dim: int = 88
+    video_dim: int = 2048
+    physio_dim: int = 64  # Physiology input dimension from WESAD
 
-    # Model parameters
-    num_classes = 3
-    text_dim = 768
-    audio_dim = 88
-    video_dim = 2048
+    sequence_length: int = 8
+    min_user_posts: int = 3
+    min_sequence_length: int = 3
+    overlap_ratio: float = 0.25
 
-    # NEW: Physiology input dimension from WESAD
-    physio_dim = 64  # Example dimension, set according to your extracted features
+    hidden_dim: int = 256
+    dropout_rate: float = 0.4
+    num_heads: int = 8
+    num_transformer_layers: int = 2
 
+    num_epochs: int = 50
+    batch_size: int = 16
+    learning_rate: float = 1e-4
+    weight_decay: float = 1e-4
+    gradient_clip_norm: float = 0.1
 
-    # Sequence parameters
-    sequence_length = 8
-    min_user_posts = 3
-    min_sequence_length = 3
-    overlap_ratio = 0.25
+    patience: int = 15
+    min_delta: float = 0.001
 
+    outlier_threshold: float = 3.0
+    missing_threshold: float = 0.1
+    variance_threshold: float = 1e-6
 
-    # Model architecture
-    hidden_dim = 256
-    dropout_rate = 0.4
-    num_heads = 8
-    num_transformer_layers = 2
+    use_data_augmentation: bool = True
+    noise_factor: float = 0.01
+    dropout_augmentation_rate: float = 0.1
 
-
-    # Training configuration
-    num_epochs = 50
-    batch_size = 16
-    learning_rate = 5e-5
-    weight_decay = 1e-4
-    gradient_clip_norm = 0.5
-    patience = 15
-    min_delta = 0.001
-
-
-    # Data quality parameters
-    outlier_threshold = 3.0
-    missing_threshold = 0.1
-    variance_threshold = 1e-6
-
-
-    # Augmentation
-    use_data_augmentation = True
-    noise_factor = 0.01
-    dropout_augmentation_rate = 0.1
-
-    # VALIDATE CONFIGURATION
     @classmethod
-    def validate(cls):
-        """Validate configuration consistency"""
-        assert cls.sequence_length > cls.min_sequence_length, (
+    def validate(cls) -> None:
+        """Validate configuration consistency."""
+        assert cls.sequence_length > cls.min_sequence_length, \
             f"sequence_length ({cls.sequence_length}) must be greater than min_sequence_length ({cls.min_sequence_length})"
-        )
         assert cls.min_user_posts >= 1, "min_user_posts must be at least 1"
         assert 0 < cls.overlap_ratio < 1, "overlap_ratio must be between 0 and 1"
         assert 0 < cls.dropout_rate < 1, "dropout_rate must be between 0 and 1"
@@ -66,7 +52,6 @@ class Config:
         assert cls.batch_size > 0, "batch_size must be positive"
         assert cls.learning_rate > 0, "learning_rate must be positive"
         assert cls.num_classes > 0, "num_classes must be positive"
-        # New validation for physio_dim added for safety
-        assert hasattr(cls, 'physio_dim') and cls.physio_dim > 0, "physio_dim must be set and positive"
+        assert hasattr(cls, "physio_dim") and cls.physio_dim > 0, "physio_dim must be set and positive"
 
         logging.info("✅ Configuration validated successfully")

@@ -140,10 +140,11 @@ class ImprovedMultimodalModel(nn.Module):
             attended_text = text_encoded
             attended_audio = audio_encoded
 
+        # Use reshape instead of view for safer tensor shape handling
         fused = torch.cat([text_encoded, attended_text, video_encoded, attended_audio, physio_encoded], dim=-1)
-        fused_reshaped = fused.view(-1, self.config.hidden_dim * 5)
+        fused_reshaped = fused.reshape(-1, self.config.hidden_dim * 5)
         fused_features = self.fusion_layer(fused_reshaped)
-        fused_features = fused_features.view(batch_size, seq_len, self.config.hidden_dim)
+        fused_features = fused_features.reshape(batch_size, seq_len, self.config.hidden_dim)
 
         try:
             temporal_output = self.temporal_encoder(fused_features)
@@ -169,20 +170,20 @@ class ImprovedMultimodalModel(nn.Module):
         try:
             with torch.no_grad():
                 self.eval()
-                
+
                 text_encoded = self.text_encoder(text_features)
                 audio_encoded = self.audio_encoder(audio_features)
                 video_encoded = self.video_encoder(video_features)
                 physio_encoded = self.physio_encoder(physio_features)
-                
+
                 _, text_attention = self.cross_attention(text_encoded, audio_encoded, audio_encoded)
                 _, audio_attention = self.cross_attention(audio_encoded, video_encoded, video_encoded)
-                
+
                 return {
                     'text_attention': text_attention.cpu().numpy(),
                     'audio_attention': audio_attention.cpu().numpy()
                 }
-                
+
         except Exception as e:
             logger.warning(f"Could not extract attention weights: {e}")
             return {}
@@ -203,6 +204,7 @@ class ImprovedMultimodalModel(nn.Module):
 # Backward compatibility classes
 class MultimodalTransformer(ImprovedMultimodalModel):
     pass
+
 
 class EnhancedMultimodalModel(ImprovedMultimodalModel):
     pass
@@ -235,7 +237,7 @@ class SimpleMultimodalModel(nn.Module):
         audio_pooled = torch.mean(self.audio_encoder(audio_features), dim=1)
         video_pooled = torch.mean(self.video_encoder(video_features), dim=1)
         physio_pooled = torch.mean(self.physio_encoder(physio_features), dim=1)
-        
+
         fused = torch.cat([text_pooled, audio_pooled, video_pooled, physio_pooled], dim=-1)
         logits = self.fusion(fused)
         return logits

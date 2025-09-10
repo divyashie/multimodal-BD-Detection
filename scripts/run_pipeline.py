@@ -1,6 +1,6 @@
 """
 Enhanced BD Detection Pipeline
-Complete implementation integrating all improvements
+Complete implementation integrating all improvements including balanced sampling
 """
 
 import pickle
@@ -10,6 +10,8 @@ import numpy as np
 import os
 from datetime import datetime
 from typing import Tuple, List, Dict
+from collections import Counter
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from configs.config import Config
 from data.dataset import (
@@ -119,6 +121,20 @@ def load_and_analyze_data(logger: logging.Logger) -> Tuple[List, Dict]:
         raise
 
 
+def create_balanced_sampler(dataset):
+    labels = [dataset[i]['sequence_label'].item() for i in range(len(dataset))]
+    class_counts = Counter(labels)
+    weights_per_class = {cls: 1.0 / count for cls, count in class_counts.items()}
+    sample_weights = [weights_per_class[label] for label in labels]
+
+    sampler = WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(sample_weights),
+        replacement=True
+    )
+    return sampler
+
+
 def create_datasets_and_loaders(full_data, logger: logging.Logger):
     logger.info("\n" + "="*50)
     logger.info("🔄 DATASET CREATION AND DATA LOADING")
@@ -136,8 +152,17 @@ def create_datasets_and_loaders(full_data, logger: logging.Logger):
         val_dataset = ImprovedTemporalDataset(val_data, Config, mode='val')
         test_dataset = ImprovedTemporalDataset(test_data, Config, mode='test')
 
+        logger.info("⚡ Creating train sampler for class balancing...")
+        train_sampler = create_balanced_sampler(train_dataset)
+
         logger.info("⚡ Creating data loaders...")
-        train_loader = create_improved_data_loader(train_dataset, Config.batch_size, shuffle=True, use_sampler=True)
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=Config.batch_size,
+            sampler=train_sampler,
+            drop_last=True,
+            num_workers=Config.num_workers if hasattr(Config, 'num_workers') else 4,
+        )
         val_loader = create_improved_data_loader(val_dataset, Config.batch_size)
         test_loader = create_improved_data_loader(test_dataset, Config.batch_size)
 
@@ -146,7 +171,7 @@ def create_datasets_and_loaders(full_data, logger: logging.Logger):
         logger.info(f"   🚃 Validation: {len(val_loader)} batches")
         logger.info(f"   🚄 Test: {len(test_loader)} batches")
 
-        logger.info("⚖️  Computing class weights...")
+        logger.info("⚖️  Computing class weights (for logging only)...")
         class_weights = train_dataset.get_class_weights()
         logger.info(f"   Class weights: {class_weights}")
 
@@ -176,11 +201,29 @@ def create_and_setup_model(logger: logging.Logger):
         raise
 
 
+def validate_data_loader(data_loader, logger):
+    for batch_idx, batch in enumerate(data_loader):
+        for key, tensor in batch.items():
+            if isinstance(tensor, torch.Tensor):
+                if torch.isnan(tensor).any():
+                    logger.error(f"NaN detected in {key} at batch {batch_idx}")
+                    raise ValueError("NaN detected in input data.")
+                if torch.isinf(tensor).any():
+                    logger.error(f"Inf detected in {key} at batch {batch_idx}")
+                    raise ValueError("Inf detected in input data.")
+                if tensor.abs().max() > 1e6:
+                    logger.warning(f"Extreme value in {key} at batch {batch_idx}: max={tensor.abs().max()}")
+
+
 def train_model(model, train_loader, val_loader, class_weights, logger: logging.Logger):
     logger.info("\n" + "="*50)
     logger.info("🚀 MODEL TRAINING")
     logger.info("="*50)
     try:
+        logger.info("🏋️  Validating training data...")
+        validate_data_loader(train_loader, logger)
+        validate_data_loader(val_loader, logger)
+
         logger.info("🏋️  Initializing enhanced trainer...")
         trainer = ImprovedTrainer(model, Config)
         logger.info("🚀 Starting training process...")

@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import logging
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 import matplotlib.pyplot as plt
 from typing import Dict, List
 from torch.utils.data import DataLoader
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class FocalLoss(nn.Module):
     """Focal Loss for handling class imbalance"""
     
-    def __init__(self, alpha=0.25, gamma=2.0, reduction='mean'):
+    def __init__(self, alpha=None, gamma=2.0, reduction='mean'):
         super().__init__()
         self.alpha = alpha
         self.gamma = gamma
@@ -28,7 +28,11 @@ class FocalLoss(nn.Module):
     def forward(self, inputs, targets):
         ce_loss = nn.functional.cross_entropy(inputs, targets, reduction='none')
         pt = torch.exp(-ce_loss)
-        focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+        if self.alpha is not None:
+            focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+        else:
+            # When alpha is None, no weighting applied
+            focal_loss = (1 - pt) ** self.gamma * ce_loss
         
         if self.reduction == 'mean':
             return focal_loss.mean()
@@ -75,17 +79,16 @@ class ImprovedTrainer:
         )
 
         if class_weights is not None:
-            class_weights = class_weights.to(self.device)
             imbalance_ratio = class_weights.max() / class_weights.min()
             if imbalance_ratio > 5.0:
-                criterion = FocalLoss(alpha=0.25, gamma=2.0)
-                logger.info("Using Focal Loss due to high class imbalance")
+                criterion = FocalLoss(alpha=None, gamma=2.0)  # focal loss without alpha weighting
+                logger.info("Using unweighted Focal Loss due to balanced sampling")
             else:
-                criterion = nn.CrossEntropyLoss(weight=class_weights)
-                logger.info("Using weighted CrossEntropy Loss")
+                criterion = nn.CrossEntropyLoss()  # standard loss without class weights
+                logger.info("Using standard CrossEntropyLoss without class weights")
         else:
             criterion = nn.CrossEntropyLoss()
-            logger.info("Using standard CrossEntropy Loss")
+            logger.info("Using standard CrossEntropyLoss without class weights")
 
         num_epochs = getattr(self.config, 'num_epochs', 50)
         patience = getattr(self.config, 'patience', 15)
@@ -147,8 +150,10 @@ class ImprovedTrainer:
                 loss = loss / accumulation_steps
                 loss.backward()
 
+                # Gradient clipping for stability
+                nn.utils.clip_grad_norm_(self.model.parameters(), getattr(self.config, 'gradient_clip_norm', 0.5))
+
                 if (batch_idx + 1) % accumulation_steps == 0 or (batch_idx + 1) == num_batches:
-                    nn.utils.clip_grad_norm_(self.model.parameters(), getattr(self.config, 'gradient_clip_norm', 0.5))
                     optimizer.step()
                     optimizer.zero_grad()
 
@@ -228,9 +233,10 @@ class ImprovedTrainer:
 
     def _save_best_model(self):
         try:
+            # Save config as simple dict to avoid unserializable object issue
             torch.save({
                 'model_state_dict': self.model.state_dict(),
-                'config': self.config,
+                'config': {k: v for k, v in self.config.__dict__.items() if not k.startswith('__')},
                 'history': self.history,
                 'best_val_f1': self.best_val_f1,
                 'model_class': self.model.__class__.__name__
@@ -246,6 +252,13 @@ class ImprovedTrainer:
                 self.model.load_state_dict(checkpoint['model_state_dict'])
                 self.history = checkpoint.get('history', self.history)
                 self.best_val_f1 = checkpoint.get('best_val_f1', 0.0)
+
+                # Reconstruct config from dict (if you want to update any runtime config here)
+                if 'config' in checkpoint:
+                    loaded_config_dict = checkpoint['config']
+                    # For example: update self.config values or re-create Config object if needed
+                    # self.config = Config.from_dict(loaded_config_dict)  # If you implemented from_dict method
+
                 logger.info("Best model loaded successfully")
                 return True
             else:
@@ -255,150 +268,15 @@ class ImprovedTrainer:
             logger.error(f"Error loading best model: {e}")
             return False
 
-    def evaluate_model(self, test_loader: DataLoader) -> Dict[str, any]:
-        logger.info("Evaluating model on test set...")
-
-        self.model.eval()
-        all_preds = []
-        all_labels = []
-        all_probs = []
-
-        with torch.no_grad():
-            for batch in test_loader:
-                try:
-                    text = batch['text'].to(self.device, non_blocking=True)
-                    audio = batch['audio'].to(self.device, non_blocking=True)
-                    video = batch['video'].to(self.device, non_blocking=True)
-                    physio = batch['physio'].to(self.device, non_blocking=True)
-                    labels = batch['sequence_label'].to(self.device, non_blocking=True)
-
-                    outputs = self.model(text, audio, video, physio)
-                    probs = torch.softmax(outputs, dim=1)
-
-                    _, predicted = torch.max(outputs, 1)
-                    all_preds.extend(predicted.cpu().numpy())
-                    all_labels.extend(labels.cpu().numpy())
-                    all_probs.extend(probs.cpu().numpy())
-                except Exception as e:
-                    logger.error(f"Error in evaluation batch: {e}")
-                    continue
-
-        if not all_labels:
-            logger.error("No valid predictions made during evaluation")
-            return {}
-
-        accuracy = accuracy_score(all_labels, all_preds)
-        f1_weighted = f1_score(all_labels, all_preds, average='weighted', zero_division=0)
-        f1_macro = f1_score(all_labels, all_preds, average='macro', zero_division=0)
-        precision_weighted = precision_score(all_labels, all_preds, average='weighted', zero_division=0)
-        recall_weighted = recall_score(all_labels, all_preds, average='weighted', zero_division=0)
-
-        precision_per_class = precision_score(all_labels, all_preds, average=None, zero_division=0)
-        recall_per_class = recall_score(all_labels, all_preds, average=None, zero_division=0)
-        f1_per_class = f1_score(all_labels, all_preds, average=None, zero_division=0)
-
-        class_names = ['Depression', 'Mania', 'Euthymia']
-        class_report = classification_report(
-            all_labels, all_preds, 
-            target_names=class_names[:len(set(all_labels))],
-            output_dict=True, 
-            zero_division=0
-        )
-
-        conf_matrix = confusion_matrix(all_labels, all_preds)
-
-        results = {
-            'accuracy': accuracy,
-            'f1_weighted': f1_weighted,
-            'f1_macro': f1_macro,
-            'precision_weighted': precision_weighted,
-            'recall_weighted': recall_weighted,
-            'precision_per_class': precision_per_class.tolist(),
-            'recall_per_class': recall_per_class.tolist(),
-            'f1_per_class': f1_per_class.tolist(),
-            'classification_report': class_report,
-            'confusion_matrix': conf_matrix.tolist(),
-            'predictions': all_preds,
-            'labels': all_labels,
-            'probabilities': all_probs
-        }
-
-        logger.info(f"Test Results:")
-        logger.info(f"  Accuracy: {accuracy:.4f}")
-        logger.info(f"  F1 (weighted): {f1_weighted:.4f}")
-        logger.info(f"  F1 (macro): {f1_macro:.4f}")
-
-        for i, class_name in enumerate(class_names[:len(precision_per_class)]):
-            logger.info(f"  {class_name}: P={precision_per_class[i]:.3f}, R={recall_per_class[i]:.3f}, F1={f1_per_class[i]:.3f}")
-
-        return results
-
-    def plot_training_history(self, save_path: str = 'training_history.png'):
-        if not self.history['train_loss']:
-            logger.warning("No training history to plot")
-            return
-        try:
-            fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-            epochs = range(1, len(self.history['train_loss']) + 1)
-            axes[0, 0].plot(epochs, self.history['train_loss'], 'b-', label='Training Loss', linewidth=2)
-            axes[0, 0].plot(epochs, self.history['val_loss'], 'r-', label='Validation Loss', linewidth=2)
-            axes[0, 0].set_title('Training and Validation Loss')
-            axes[0, 0].set_xlabel('Epoch')
-            axes[0, 0].set_ylabel('Loss')
-            axes[0, 0].legend()
-            axes[0, 0].grid(True, alpha=0.3)
-
-            axes[0, 1].plot(epochs, self.history['train_f1'], 'b-', label='Training F1', linewidth=2)
-            axes[0, 1].plot(epochs, self.history['val_f1'], 'r-', label='Validation F1', linewidth=2)
-            if self.best_val_f1 > 0:
-                axes[0, 1].axhline(y=self.best_val_f1, color='g', linestyle='--', alpha=0.7, label=f'Best F1: {self.best_val_f1:.3f}')
-            axes[0, 1].set_title('F1 Score Progress')
-            axes[0, 1].set_xlabel('Epoch')
-            axes[0, 1].set_ylabel('F1 Score')
-            axes[0, 1].legend()
-            axes[0, 1].grid(True, alpha=0.3)
-
-            axes[1, 0].plot(epochs, self.history['train_acc'], 'b-', label='Training Accuracy', linewidth=2)
-            axes[1, 0].plot(epochs, self.history['val_acc'], 'r-', label='Validation Accuracy', linewidth=2)
-            axes[1, 0].set_title('Accuracy Progress')
-            axes[1, 0].set_xlabel('Epoch')
-            axes[1, 0].set_ylabel('Accuracy')
-            axes[1, 0].legend()
-            axes[1, 0].grid(True, alpha=0.3)
-
-            if len(epochs) > 5:
-                window = min(5, len(epochs) // 3)
-                train_loss_smooth = np.convolve(self.history['train_loss'], np.ones(window)/window, mode='valid')
-                val_loss_smooth = np.convolve(self.history['val_loss'], np.ones(window)/window, mode='valid')
-                smooth_epochs = range(window, len(self.history['train_loss']) + 1)
-
-                axes[1, 1].plot(smooth_epochs, train_loss_smooth, 'b-', label='Smoothed Train Loss', linewidth=2)
-                axes[1, 1].plot(smooth_epochs, val_loss_smooth, 'r-', label='Smoothed Val Loss', linewidth=2)
-                axes[1, 1].set_title('Smoothed Learning Curves')
-                axes[1, 1].set_xlabel('Epoch')
-                axes[1, 1].set_ylabel('Loss')
-                axes[1, 1].legend()
-                axes[1, 1].grid(True, alpha=0.3)
-            else:
-                axes[1, 1].text(0.5, 0.5, 'Insufficient data for smoothing', ha='center', va='center', transform=axes[1, 1].transAxes)
-
-            plt.tight_layout()
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            logger.info(f"Training history plot saved to {save_path}")
-            plt.show()
-            
-        except Exception as e:
-            logger.error(f"Error creating training plots: {e}")
-
-# Compatibility class
-class ImprovedEvaluator:
-    """Enhanced evaluator for comprehensive model assessment"""
-    
-    def __init__(self, model, config):
-        self.model = model
-        self.config = config
-        self.device = getattr(config, 'device', torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
-    
-    def evaluate(self, test_loader: DataLoader) -> Dict:
-        trainer = ImprovedTrainer(self.model, self.config)
-        return trainer.evaluate_model(test_loader)
+    def plot_training_history(self):
+        plt.figure(figsize=(10, 5))
+        epochs = range(1, len(self.history['train_loss']) + 1)
+        
+        plt.plot(epochs, self.history['train_loss'], label='Train Loss')
+        plt.plot(epochs, self.history['val_loss'], label='Validation Loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.title('Training and Validation Loss')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
