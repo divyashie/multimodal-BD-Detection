@@ -9,9 +9,9 @@ class Config:
 
     num_classes: int = 3
     text_dim: int = 768
-    audio_dim: int = 88
-    video_dim: int = 2048
-    physio_dim: int = 64  # Physiology input dimension from WESAD
+    audio_dim: int = 74    # COVAREP acoustic features (was 88)
+    video_dim: int = 35    # OpenFace facial features (was 2048)
+    physio_dim: int = 64   # Physiology input dimension from WESAD
 
     sequence_length: int = 8
     min_user_posts: int = 3
@@ -23,14 +23,14 @@ class Config:
     num_heads: int = 8
     num_transformer_layers: int = 2
 
-    num_epochs: int = 50
-    batch_size: int = 16
-    learning_rate: float = 1e-4
-    weight_decay: float = 1e-4
-    gradient_clip_norm: float = 0.1
+    num_epochs: int = 100  # Increased for small datasets
+    batch_size: int = 32   # Larger batches for stability
+    learning_rate: float = 5e-5  # Lower LR for better generalization
+    weight_decay: float = 1e-3   # Stronger regularization
+    gradient_clip_norm: float = 1.0  # Higher clip for gradient stability
 
-    patience: int = 15
-    min_delta: float = 0.001
+    patience: int = 20  # More patience for small datasets
+    min_delta: float = 0.0001  # Smaller delta for fine improvements
 
     outlier_threshold: float = 3.0
     missing_threshold: float = 0.1
