@@ -243,9 +243,17 @@ class ImprovedEvaluator:
         confidences = [max(probs) if not any(np.isnan(probs)) else np.nan for probs in y_probs]
         confidences = [c for c in confidences if not np.isnan(c)]  # filter NaNs
         if confidences:
-            ax3.hist(confidences, bins=30, alpha=0.7, edgecolor='black')
-            ax3.axvline(np.mean(confidences), color='red', linestyle='--',
-                        label=f'Mean: {np.mean(confidences):.3f}')
+            # Use adaptive binning to avoid "too many bins" error
+            n_bins = min(30, max(5, len(set(confidences))))
+            try:
+                ax3.hist(confidences, bins=n_bins, alpha=0.7, edgecolor='black')
+                ax3.axvline(np.mean(confidences), color='red', linestyle='--',
+                            label=f'Mean: {np.mean(confidences):.3f}')
+            except ValueError:
+                # If histogram still fails, use auto binning
+                ax3.hist(confidences, bins='auto', alpha=0.7, edgecolor='black')
+                ax3.axvline(np.mean(confidences), color='red', linestyle='--',
+                            label=f'Mean: {np.mean(confidences):.3f}')
         else:
             ax3.text(0.5, 0.5, 'No valid confidences', ha='center', va='center', transform=ax3.transAxes)
 

@@ -28,12 +28,15 @@ class FocalLoss(nn.Module):
     def forward(self, inputs, targets):
         ce_loss = nn.functional.cross_entropy(inputs, targets, reduction='none')
         pt = torch.exp(-ce_loss)
+
         if self.alpha is not None:
-            focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+            # Gather alpha values for each target class
+            alpha_t = self.alpha.gather(0, targets)
+            focal_loss = alpha_t * (1 - pt) ** self.gamma * ce_loss
         else:
             # When alpha is None, no weighting applied
             focal_loss = (1 - pt) ** self.gamma * ce_loss
-        
+
         if self.reduction == 'mean':
             return focal_loss.mean()
         elif self.reduction == 'sum':
@@ -78,17 +81,28 @@ class ImprovedTrainer:
             optimizer, mode='max', factor=0.5, patience=5
         )
 
+        # Enhanced class balancing for severe imbalance (MOSEI 48% Euthymia)
         if class_weights is not None:
             imbalance_ratio = class_weights.max() / class_weights.min()
-            if imbalance_ratio > 5.0:
-                criterion = FocalLoss(alpha=None, gamma=2.0)  # focal loss without alpha weighting
-                logger.info("Using unweighted Focal Loss due to balanced sampling")
+            logger.info(f"Class imbalance ratio: {imbalance_ratio:.2f}")
+
+            if imbalance_ratio > 2.0:
+                # Use focal loss WITH class weights for severe imbalance
+                # Normalize weights to prevent gradient explosion
+                alpha = class_weights / class_weights.sum()
+                alpha = alpha.to(self.device)
+
+                criterion = FocalLoss(alpha=alpha, gamma=3.0)  # Increased gamma for harder cases
+                logger.info(f"✓ Using weighted Focal Loss (gamma=3.0, alpha={alpha.cpu().numpy()})")
+                logger.info("  Rationale: Severe class imbalance detected")
             else:
-                criterion = nn.CrossEntropyLoss()  # standard loss without class weights
-                logger.info("Using standard CrossEntropyLoss without class weights")
+                # Moderate imbalance - use standard weighted loss
+                criterion = nn.CrossEntropyLoss(weight=class_weights.to(self.device))
+                logger.info("✓ Using weighted CrossEntropyLoss")
+                logger.info("  Rationale: Moderate class imbalance")
         else:
             criterion = nn.CrossEntropyLoss()
-            logger.info("Using standard CrossEntropyLoss without class weights")
+            logger.info("✓ Using standard CrossEntropyLoss (no class weights)")
 
         num_epochs = getattr(self.config, 'num_epochs', 50)
         patience = getattr(self.config, 'patience', 15)
@@ -234,9 +248,22 @@ class ImprovedTrainer:
     def _save_best_model(self):
         try:
             # Save config as simple dict to avoid unserializable object issue
+            # Filter out methods, classmethods, and other non-serializable objects
+            config_dict = {}
+            for k, v in self.config.__dict__.items():
+                if not k.startswith('__') and not callable(v):
+                    try:
+                        # Test if the value is picklable
+                        import pickle
+                        pickle.dumps(v)
+                        config_dict[k] = v
+                    except (pickle.PicklingError, TypeError, AttributeError):
+                        # Skip non-picklable values
+                        continue
+
             torch.save({
                 'model_state_dict': self.model.state_dict(),
-                'config': {k: v for k, v in self.config.__dict__.items() if not k.startswith('__')},
+                'config': config_dict,
                 'history': self.history,
                 'best_val_f1': self.best_val_f1,
                 'model_class': self.model.__class__.__name__

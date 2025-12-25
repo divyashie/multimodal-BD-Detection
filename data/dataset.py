@@ -29,10 +29,16 @@ class ImprovedTemporalDataset(Dataset):
         self.config.noise_factor = getattr(config, 'noise_factor', 0.01)
         self.config.dropout_augmentation_rate = getattr(config, 'dropout_augmentation_rate', 0.1)
 
+        # Track NaN statistics
+        self.nan_stats = {'audio': 0, 'text': 0, 'video': 0, 'physio': 0}
+
         # Process data
         self.data = self._clean_and_prepare_data(data_list)
         if len(self.data) == 0:
             raise ValueError(f"No valid data remaining after cleaning for {mode} dataset")
+
+        # Log NaN statistics
+        self._log_nan_statistics(len(data_list))
 
         self.sequences = self._create_improved_sequences()
         if len(self.sequences) == 0:
@@ -60,31 +66,45 @@ class ImprovedTemporalDataset(Dataset):
                 # Ensure text features
                 if 'text' not in item:
                     item['text'] = torch.zeros(self.config.text_dim)
+                    self.nan_stats['text'] += 1
                 elif not isinstance(item['text'], torch.Tensor):
                     item['text'] = torch.tensor(item['text'], dtype=torch.float32)
+
+                if torch.isnan(item['text']).any() or torch.isinf(item['text']).any():
+                    self.nan_stats['text'] += 1
                 item['text'] = torch.nan_to_num(item['text'], nan=0.0, posinf=0.0, neginf=0.0)
 
                 # Ensure audio features
                 if 'audio' not in item:
                     item['audio'] = torch.zeros(self.config.audio_dim)
+                    self.nan_stats['audio'] += 1
                 elif not isinstance(item['audio'], torch.Tensor):
                     item['audio'] = torch.tensor(item['audio'], dtype=torch.float32)
+
                 if torch.isnan(item['audio']).any() or torch.isinf(item['audio']).any():
-                    logger.warning(f"NaN or Inf detected in audio features for user_id: {item.get('user_id')}, replacing with zeros.")
+                    self.nan_stats['audio'] += 1
                 item['audio'] = torch.nan_to_num(item['audio'], nan=0.0, posinf=0.0, neginf=0.0)
 
                 # Ensure video features
                 if 'video' not in item:
                     item['video'] = torch.zeros(self.config.video_dim)
+                    self.nan_stats['video'] += 1
                 elif not isinstance(item['video'], torch.Tensor):
                     item['video'] = torch.tensor(item['video'], dtype=torch.float32)
+
+                if torch.isnan(item['video']).any() or torch.isinf(item['video']).any():
+                    self.nan_stats['video'] += 1
                 item['video'] = torch.nan_to_num(item['video'], nan=0.0, posinf=0.0, neginf=0.0)
 
                 # NEW: Ensure physio features
                 if 'physio' not in item:
                     item['physio'] = torch.zeros(self.config.physio_dim)
+                    self.nan_stats['physio'] += 1
                 elif not isinstance(item['physio'], torch.Tensor):
                     item['physio'] = torch.tensor(item['physio'], dtype=torch.float32)
+
+                if torch.isnan(item['physio']).any() or torch.isinf(item['physio']).any():
+                    self.nan_stats['physio'] += 1
                 item['physio'] = torch.nan_to_num(item['physio'], nan=0.0, posinf=0.0, neginf=0.0)
 
                 # Label fallback
@@ -170,8 +190,14 @@ class ImprovedTemporalDataset(Dataset):
 
                 for start in range(0, len(indices) - seq_len + 1, step_size):
                     sequence_indices = indices[start:start + seq_len]
+
+                    # FIXED: Use random sampling from existing sequence instead of repetition
+                    # This avoids creating artificial temporal patterns
+                    original_length = len(sequence_indices)
                     while len(sequence_indices) < self.config.sequence_length:
-                        sequence_indices.append(sequence_indices[-1])
+                        # Randomly sample from the original sequence to pad
+                        random_idx = np.random.randint(0, original_length)
+                        sequence_indices.append(sequence_indices[random_idx])
 
                     # DIAGNOSTIC: Check what labels are in this sequence
                     seq_labels = [self.data[i]['label'] for i in sequence_indices[:seq_len]]
@@ -252,6 +278,22 @@ class ImprovedTemporalDataset(Dataset):
 
         except Exception as e:
             logger.error(f"Error in diagnostic logging: {e}")
+
+    def _log_nan_statistics(self, original_count: int):
+        """Log statistics about NaN/missing values across modalities"""
+        logger.info(f"\n{'='*50}")
+        logger.info(f"NaN/MISSING DATA STATISTICS ({self.mode} dataset)")
+        logger.info(f"{'='*50}")
+        logger.info(f"Total samples processed: {original_count}")
+        logger.info(f"Samples with NaN/missing data by modality:")
+
+        for modality, count in self.nan_stats.items():
+            percentage = (count / original_count * 100) if original_count > 0 else 0
+            logger.info(f"  - {modality.capitalize()}: {count}/{original_count} ({percentage:.2f}%)")
+
+        total_nan = sum(self.nan_stats.values())
+        logger.info(f"Total NaN/missing instances: {total_nan}")
+        logger.info(f"{'='*50}\n")
 
     def _augment_sequence(self, text_features: torch.Tensor,
                          audio_features: torch.Tensor,
@@ -369,18 +411,26 @@ class ImprovedTemporalDataset(Dataset):
                 text_features, audio_features, video_features, physio_features
             )
 
-            # FIXED: Class-preserving label aggregation logic
+            # FIXED: Majority voting for label aggregation (no class bias)
             label_counts = Counter(labels.tolist())
 
-            # Priority-based label selection to preserve rare classes
-            if 2 in label_counts:  # Euthymia (rare class)
-                sequence_label = 2
-            elif 0 in label_counts and 1 in label_counts:  # Mixed depression/mania
-                # Use majority vote for mixed non-euthymia cases
-                sequence_label = label_counts.most_common(1)[0][0]
+            # Use majority voting - the most common label in the sequence
+            # If there's a tie, preserve rare class (2) as tiebreaker only
+            most_common = label_counts.most_common()
+
+            if len(most_common) == 1:
+                # Only one class present
+                sequence_label = most_common[0][0]
+            elif most_common[0][1] > most_common[1][1]:
+                # Clear majority
+                sequence_label = most_common[0][0]
             else:
-                # Single class or clear majority
-                sequence_label = label_counts.most_common(1)[0][0]
+                # Tie situation - use rare class (2) as tiebreaker if present
+                if 2 in label_counts:
+                    sequence_label = 2
+                else:
+                    # Otherwise pick first in tie
+                    sequence_label = most_common[0][0]
 
             return {
                 'text': text_features,
