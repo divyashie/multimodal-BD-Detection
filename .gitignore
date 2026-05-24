@@ -1,0 +1,4 @@
+# Ignore embedded backup and research state repositories
+research_BD_states/multimodal-BD-Detection-backup/
+research_BD_states/multimodal-BD-Detection/
+
