@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "multimodal-BD-Detection (methods paper)"
+authors:
+  - family-names: "Lastname"
+    given-names: "Firstname"
+    affiliation: "Affiliation"
+date-released: 2026-01-01
+version: 0.1.0
+doi: TODO
+url: TODO
