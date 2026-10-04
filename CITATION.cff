@@ -1,10 +1,50 @@
 cff-version: 1.2.0
-title: "multimodal-BD-Detection (methods paper)"
+message: "If you use this repository or its analysis, please cite it as below."
+title: "multimodal-BD-Detection: a worked failure case in cross-corpus multimodal mental-health ML"
+abstract: >-
+  Diagnostic reanalysis of a multimodal bipolar-state classifier that reported 82.6% macro-F1
+  and passed four standard validation checks while separating rows by source file. Documents
+  three independent mechanisms, two hypotheses tested and rejected, and a corrected benchmark
+  on the OBF-Psychiatric dataset.
+type: software
+
 authors:
-  - family-names: "Lastname"
-    given-names: "Firstname"
-    affiliation: "Affiliation"
-date-released: 2026-01-01
-version: 0.1.0
-doi: TODO
-url: TODO
+  # REPLACE with your details. family-names is your surname, given-names your first name.
+  - family-names: Soopal
+    given-names: Bhoj Rani
+    # ORCID is optional but worth having — free at https://orcid.org, takes five minutes,
+    # and PhD applications and journals both ask for it. Delete this line if you skip it.
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+    # Your current institution, or delete the line if unaffiliated.
+    affiliation: Leal Group
+
+repository-code: "https://github.com/divyashie/multimodal-BD-Detection"
+url: "https://github.com/divyashie/multimodal-BD-Detection"
+
+# Add a LICENSE file before claiming one here. MIT is the usual choice for research code.
+license: MIT
+
+version: "1.0.0"
+date-released: "2026-10-04"
+
+keywords:
+  - machine learning
+  - mental health
+  - multimodal fusion
+  - data leakage
+  - construct validity
+  - reproducibility
+  - bipolar disorder
+
+# Once the preprint is posted, uncomment this block and fill in the DOI. Citation tools will
+# then point people at the paper rather than the repository.
+#
+# preferred-citation:
+#   type: article
+#   title: "<<paper title>>"
+#   authors:
+#     - family-names: "<<surname>>"
+#       given-names: "<<first name>>"
+#   year: 2026
+#   doi: "<<medRxiv DOI>>"
+#   url: "<<medRxiv URL>>"

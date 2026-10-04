@@ -1,0 +1,493 @@
+{
+  "meta": {
+    "started": "2026-10-04 06:10",
+    "smoke_test": false,
+    "finished": "2026-10-04 06:40"
+  },
+  "A": {
+    "shapes": {
+      "text": [
+        141,
+        768
+      ],
+      "physio": [
+        141,
+        34
+      ],
+      "n": 141,
+      "class_counts": [
+        47,
+        47,
+        47
+      ]
+    },
+    "A1_saved_models_f1": {
+      "text": 0.7557339515192171,
+      "physio": 0.8231541420395909,
+      "fusion": 0.825925925925926
+    },
+    "A1_refit_fusion_split_f1": 0.825925925925926,
+    "A2_split": {
+      "aligned": [
+        0.853901829737743,
+        0.02997010368157226
+      ],
+      "across_class_shuffle": [
+        0.7809704817599553,
+        0.02538944457346694
+      ],
+      "within_class_shuffle": [
+        0.8550050631629578,
+        0.02954679970090923
+      ]
+    },
+    "A2_cv": {
+      "aligned": [
+        0.828379614004243,
+        0.012329927120323988
+      ],
+      "across_class_shuffle": [
+        0.7516460709077613,
+        0.013223093607275064
+      ],
+      "within_class_shuffle": [
+        0.8282352744660137,
+        0.01631861740021418
+      ]
+    },
+    "A3_feature_groups": {
+      "text_only": {
+        "split": 0.8280701754385964,
+        "cv": [
+          0.7362004216365903,
+          0.01923535456557967
+        ]
+      },
+      "wesad_only": {
+        "split": 0.658236241356446,
+        "cv": [
+          0.6498734779450731,
+          0.02356911537206171
+        ]
+      },
+      "obf_actigraphy_only": {
+        "split": 0.7912457912457912,
+        "cv": [
+          0.7487951544573401,
+          0.010675159683810522
+        ]
+      },
+      "obf_clinical_scores_only": {
+        "split": 0.5661375661375662,
+        "cv": [
+          0.6995547062146557,
+          0.012873504370204798
+        ]
+      },
+      "physio_all": {
+        "split": 0.8266590389016018,
+        "cv": [
+          0.8375854919548568,
+          0.011017763062164756
+        ]
+      },
+      "physio_without_clinical_scores": {
+        "split": 0.7222222222222223,
+        "cv": [
+          0.7467123802771071,
+          0.0175478897236923
+        ]
+      },
+      "fusion_all": {
+        "split": 0.825925925925926,
+        "cv": [
+          0.828379614004243,
+          0.012329927120323988
+        ]
+      },
+      "fusion_without_clinical_scores": {
+        "split": 0.7237538290169869,
+        "cv": [
+          0.7664569235101972,
+          0.010532540067264395
+        ]
+      }
+    },
+    "A4_test_rows_with_exact_duplicate_in_train": {
+      "text": 0.0,
+      "physio": 0.0,
+      "wesad_block": 0.0
+    }
+  },
+  "B1_wesad": {
+    "n_subjects": 11,
+    "n_windows": 63870,
+    "condition_x_state": {
+      "Depression": {
+        "amusement": 0,
+        "baseline": 12896,
+        "ignore_5": 0,
+        "ignore_6": 583,
+        "ignore_7": 0,
+        "meditation": 0,
+        "stress": 0,
+        "transient": 0
+      },
+      "Euthymia": {
+        "amusement": 4089,
+        "baseline": 0,
+        "ignore_5": 0,
+        "ignore_6": 0,
+        "ignore_7": 0,
+        "meditation": 0,
+        "stress": 0,
+        "transient": 29139
+      },
+      "Mania": {
+        "amusement": 0,
+        "baseline": 0,
+        "ignore_5": 0,
+        "ignore_6": 0,
+        "ignore_7": 0,
+        "meditation": 8640,
+        "stress": 7361,
+        "transient": 0
+      },
+      "dropped": {
+        "amusement": 0,
+        "baseline": 0,
+        "ignore_5": 572,
+        "ignore_6": 0,
+        "ignore_7": 590,
+        "meditation": 0,
+        "stress": 0,
+        "transient": 0
+      }
+    }
+  },
+  "B2_obf": {
+    "n_rows": 1059,
+    "n_fully_imputed_rows": 78,
+    "gmm_counts": [
+      900,
+      112,
+      47
+    ],
+    "recover_gmm_from_clinical_scores_only": {
+      "row_cv": [
+        0.7903713710562515,
+        0.009286303637805483
+      ],
+      "subject_grouped_cv": [
+        0.7928577948176248,
+        0.005080220886947036
+      ]
+    },
+    "recover_gmm_from_actigraphy_only": {
+      "row_cv": [
+        0.6936826045349667,
+        0.0021826650237606916
+      ],
+      "subject_grouped_cv": [
+        0.6945096188304203,
+        0.003296205187571721
+      ]
+    },
+    "recover_gmm_from_all_8": {
+      "row_cv": [
+        0.9382328379024312,
+        0.009515966725636768
+      ],
+      "subject_grouped_cv": [
+        0.9438868348008981,
+        0.003146892477458302
+      ]
+    },
+    "diagnosis_x_gmm": {
+      "0": {
+        "<missing>": 78,
+        "control": 325,
+        "depression": 236,
+        "schizophrenia": 261
+      },
+      "1": {
+        "<missing>": 38,
+        "control": 40,
+        "depression": 32,
+        "schizophrenia": 2
+      },
+      "2": {
+        "<missing>": 46,
+        "control": 1,
+        "depression": 0,
+        "schizophrenia": 0
+      }
+    },
+    "ARI_diagnosis_vs_gmm": 0.058629487742544104,
+    "diagnosis_from_actigraphy_subject_grouped": [
+      0.6449963524653913,
+      0.009891510017694474
+    ]
+  },
+  "B3_text": {
+    "kaggle_cluster_counts": [
+      374,
+      855,
+      463
+    ],
+    "kaggle_labels_recovered_by_nearest_centroid": 1.0,
+    "source_x_label": {
+      "Depression": {
+        "kaggle_bd_reddit": 855,
+        "multiclass_twitter": 6940
+      },
+      "Euthymia": {
+        "kaggle_bd_reddit": 374,
+        "multiclass_twitter": 1985
+      },
+      "Mania": {
+        "kaggle_bd_reddit": 463,
+        "multiclass_twitter": 2312
+      }
+    },
+    "source_identity_probe_cv": [
+      0.9357353692958655,
+      0.0
+    ],
+    "label_from_source_only_f1": 0.25075596731647687
+  },
+  "B4_replication": {
+    "wesad_duplicate_rate": 0.29257857902416107,
+    "n_fused": 141,
+    "text_only_full_corpus": 0.7562700303964244,
+    "physio_only": 0.8231541420395909,
+    "fusion": 0.825925925925926
+  },
+  "B5_leakage": {
+    "test_rows_same_wesad_subject_in_train": 1.0,
+    "test_rows_same_wesad_window_in_train": 0.0,
+    "test_rows_wesad_window_within_5s_in_train": 0.0,
+    "test_rows_same_obf_person_in_train": 0.0,
+    "wesad_random_window_cv": [
+      0.9623017549353083,
+      0.00050049806134983
+    ],
+    "wesad_leave_one_subject_out": 0.42416433223133315
+  },
+  "B6_waterfall": {
+    "S0 reported protocol (single split, build 42)": {
+      "fusion": 0.825925925925926
+    },
+    "S1 repeated CV (same features)": {
+      "fusion": [
+        0.8267305786451915,
+        0.02488524936698934
+      ],
+      "text_only": [
+        0.7185096927363249,
+        0.03377408826666432
+      ],
+      "physio_only": [
+        0.878890673749216,
+        0.029371412612658368
+      ],
+      "fusion_within_class_shuffle": [
+        0.8286993702644454,
+        0.0199848682411759
+      ],
+      "fusion_across_class_shuffle": [
+        0.7204462274690427,
+        0.04061057740777283
+      ]
+    },
+    "S2 + clinical scores removed": {
+      "fusion": [
+        0.7605402621843745,
+        0.03208728716618423
+      ],
+      "text_only": [
+        0.7185096927363249,
+        0.03377408826666432
+      ],
+      "physio_only": [
+        0.8101017447269945,
+        0.034938673822223425
+      ],
+      "fusion_within_class_shuffle": [
+        0.7571083241477174,
+        0.02704797507748465
+      ],
+      "fusion_across_class_shuffle": [
+        0.7185807397723392,
+        0.03883685535354518
+      ]
+    },
+    "S3 + grouped by WESAD subject": {
+      "fusion": [
+        0.7401877341375567,
+        0.02974902880896438
+      ],
+      "text_only": [
+        0.709828830902653,
+        0.03274343577636822
+      ],
+      "physio_only": [
+        0.7174238157168729,
+        0.05587372234590686
+      ],
+      "fusion_within_class_shuffle": [
+        0.7385553943641326,
+        0.034118813995112456
+      ],
+      "fusion_across_class_shuffle": [
+        0.7107625549526402,
+        0.04309588950376697
+      ]
+    },
+    "S3b + grouped by OBF person (alt.)": {
+      "fusion": [
+        0.7587862639776743,
+        0.0284823428631881
+      ],
+      "text_only": [
+        0.7221813694117644,
+        0.03888797191224669
+      ],
+      "physio_only": [
+        0.8080237621476295,
+        0.03728377352731758
+      ],
+      "fusion_within_class_shuffle": [
+        0.7556744995891445,
+        0.03899669683362999
+      ],
+      "fusion_across_class_shuffle": [
+        0.7140809366580471,
+        0.04124883608906279
+      ]
+    }
+  },
+  "B7_calibration": {
+    "n_test": 29,
+    "original_protocol": {
+      "uncalibrated_bins5": {
+        "ece": 0.30534482758620696,
+        "ci95": [
+          0.16586206896551714,
+          0.41086637931034475
+        ]
+      },
+      "uncalibrated_bins10": {
+        "ece": 0.3053448275862068,
+        "ci95": [
+          0.19671120689655167,
+          0.4155344827586207
+        ]
+      },
+      "uncalibrated_bins15": {
+        "ece": 0.30534482758620685,
+        "ci95": [
+          0.19290086206896553,
+          0.4109310344827586
+        ]
+      },
+      "isotonic_fit_on_train_bins5": {
+        "ece": 0.048225264869156695,
+        "ci95": [
+          0.027401444323410875,
+          0.21682198178908693
+        ]
+      },
+      "isotonic_fit_on_train_bins10": {
+        "ece": 0.10415828052769446,
+        "ci95": [
+          0.05705733785481683,
+          0.24705326483386197
+        ]
+      },
+      "isotonic_fit_on_train_bins15": {
+        "ece": 0.17829282580381384,
+        "ci95": [
+          0.09878823708879711,
+          0.29707571309123554
+        ]
+      }
+    },
+    "heldout_cv_calibrated_ece10": {
+      "mean": 0.1306866310880395,
+      "p2.5": 0.0784413203524989,
+      "p97.5": 0.18534370133830794
+    }
+  },
+  "B8_source_audit": {
+    "actigraphy_class0_unique": 40,
+    "actigraphy_class1_unique": 32,
+    "actigraphy_class2_unique": 2,
+    "clinical_class0_unique": 1,
+    "clinical_class1_unique": 16,
+    "clinical_class2_unique": 47,
+    "label_from_missingness_mask": [
+      0.542489021658092,
+      0.005431189817065511
+    ]
+  },
+  "B9_join": {
+    "features_people": 77,
+    "features_rows": 897,
+    "info_people": 162,
+    "key_overlap": 77
+  },
+  "S6": {
+    "filter": {
+      "person_days_raw": 2206,
+      "person_days_kept": 1785,
+      "dropped_incomplete": 335,
+      "dropped_dup_timestamps": 6,
+      "dropped_zero_activity": 87
+    },
+    "recipe_validation_membership": {
+      "control_1": 1.0,
+      "control_10": 1.0,
+      "control_11": 1.0,
+      "control_12": 1.0,
+      "control_13": 1.0
+    },
+    "diagnosis_5class_subject_grouped": [
+      0.3142074111616572,
+      0.008008222192146525
+    ],
+    "diagnosis_5class_random_rows": [
+      0.40025213590314357,
+      0.0038042873872658057
+    ],
+    "diagnosis_3class_subject_grouped": [
+      0.5225307744381676,
+      0.01573282574116219
+    ],
+    "positive_control_obf": {
+      "actigraphy_only": 0.49357042014912295,
+      "scales_only": 0.7331836718023184,
+      "fusion_aligned": 0.7316702902110871,
+      "fusion_within_class_shuffle": [
+        0.7258345267637905,
+        0.02654257574713559
+      ],
+      "fusion_across_class_shuffle": [
+        0.4856309826232822,
+        0.07213669594450718
+      ]
+    },
+    "wesad_chest_wrist_aligned": [
+      0.42202760852669235,
+      0.018835497049005737
+    ],
+    "wesad_chest_wrist_withincell": [
+      0.4239691332645939,
+      0.012562530917302918
+    ],
+    "wesad_chest_wrist_naive_shuffle_LEAKY": [
+      0.5901655711977817,
+      0.02363224644070309
+    ]
+  }
+}

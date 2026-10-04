@@ -9,7 +9,7 @@
 
 A worked failure case in multimodal mental-health machine learning, with diagnostics.
 
-A classifier was built by fusing five public corpora — two physiological, three text — none of
+A classifier was built by fusing four public corpora — two physiological, two text — none of
 which share participants. It reached 82.6% macro-F1 and passed label shuffling, a fusion ladder,
 noise injection, and calibration. Re-running the pipeline with provenance retained shows three
 independent mechanisms, each sufficient on its own to produce that result:
@@ -30,7 +30,7 @@ independent mechanisms, each sufficient on its own to produce that result:
    macro-F1 against a 0.333 floor.
 
 3. **The physiological label mapping did not survive inspection.** WESAD condition codes were
-   mapped to bipolar states by hand. The resulting largest class is 29,139 windows of undefined
+   mapped to bipolar states by hand. The resulting largest class is 39,507 windows of undefined
    inter-condition time; the "manic" class pools stress and meditation.
 
 Two further mechanisms were hypothesised and **ruled out**: duplicate rows from resampling with
