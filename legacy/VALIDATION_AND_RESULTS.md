@@ -1,3 +1,9 @@
+> **Superseded.** This document reports the original pipeline's validation results as
+> written in 2025. Its conclusions do not hold: the 82.6% macro-F1 it reports is
+> reproducible but does not measure bipolar state. See `RETROSPECTIVE.md` for what went
+> wrong and `methods-paper/` for the analysis. This file is preserved unaltered below
+> because the methods paper examines these specific claims.
+
 # Validation Framework & Results
 
 **Complete validation results for multimodal bipolar disorder state detection**

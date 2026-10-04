@@ -1,0 +1,53 @@
+{
+  "filter": {
+    "person_days_raw": 2206,
+    "person_days_kept": 1785,
+    "dropped_incomplete": 335,
+    "dropped_dup_timestamps": 6,
+    "dropped_zero_activity": 87
+  },
+  "recipe_validation_membership": {
+    "control_1": 1.0,
+    "control_10": 1.0,
+    "control_11": 1.0,
+    "control_12": 1.0,
+    "control_13": 1.0
+  },
+  "diagnosis_5class_subject_grouped": [
+    0.3142074111616572,
+    0.008008222192146525
+  ],
+  "diagnosis_5class_random_rows": [
+    0.40025213590314357,
+    0.0038042873872658057
+  ],
+  "diagnosis_3class_subject_grouped": [
+    0.5225307744381676,
+    0.01573282574116219
+  ],
+  "positive_control_obf": {
+    "actigraphy_only": 0.49357042014912295,
+    "scales_only": 0.7331836718023184,
+    "fusion_aligned": 0.7316702902110871,
+    "fusion_within_class_shuffle": [
+      0.7258345267637905,
+      0.02654257574713559
+    ],
+    "fusion_across_class_shuffle": [
+      0.4856309826232822,
+      0.07213669594450718
+    ]
+  },
+  "wesad_chest_wrist_aligned": [
+    0.42202760852669235,
+    0.018835497049005737
+  ],
+  "wesad_chest_wrist_withincell": [
+    0.4239691332645939,
+    0.012562530917302918
+  ],
+  "wesad_chest_wrist_naive_shuffle_LEAKY": [
+    0.5901655711977817,
+    0.02363224644070309
+  ]
+}

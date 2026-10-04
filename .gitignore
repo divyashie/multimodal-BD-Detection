@@ -1,4 +1,21 @@
-# Ignore embedded backup and research state repositories
-research_BD_states/multimodal-BD-Detection-backup/
-research_BD_states/multimodal-BD-Detection/
+# OS
+.DS_Store
 
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Embedded backup repositories
+research_BD_states/
+
+# Data and large artifacts — never commit the corpora
+data/
+*.pkl
+*.npz
+*.npy
+
+# Paper build artifacts
+methods-paper/figures/*.pdf
+methods-paper/figures/*.png
