@@ -1,0 +1,167 @@
+{
+  "meta": {
+    "started": "2026-10-04 16:25",
+    "smoke_test": false
+  },
+  "A": {
+    "shapes": {
+      "text": [
+        141,
+        768
+      ],
+      "physio": [
+        141,
+        34
+      ],
+      "n": 141,
+      "class_counts": [
+        47,
+        47,
+        47
+      ]
+    },
+    "A1_saved_models_f1": {
+      "text": 0.7557339515192171,
+      "physio": 0.8231541420395909,
+      "fusion": 0.825925925925926
+    },
+    "A1_refit_fusion_split_f1": 0.825925925925926,
+    "A2_split": {
+      "aligned": [
+        0.853901829737743,
+        0.02997010368157226
+      ],
+      "across_class_shuffle": [
+        0.7809704817599553,
+        0.02538944457346694
+      ],
+      "within_class_shuffle": [
+        0.8550050631629578,
+        0.02954679970090923
+      ]
+    },
+    "A2_cv": {
+      "aligned": [
+        0.828379614004243,
+        0.012329927120323988
+      ],
+      "across_class_shuffle": [
+        0.7516460709077613,
+        0.013223093607275064
+      ],
+      "within_class_shuffle": [
+        0.8282352744660137,
+        0.01631861740021418
+      ]
+    },
+    "A3_feature_groups": {
+      "text_only": {
+        "split": 0.8280701754385964,
+        "cv": [
+          0.7362004216365903,
+          0.01923535456557967
+        ]
+      },
+      "wesad_only": {
+        "split": 0.658236241356446,
+        "cv": [
+          0.6498734779450731,
+          0.02356911537206171
+        ]
+      },
+      "obf_actigraphy_only": {
+        "split": 0.7912457912457912,
+        "cv": [
+          0.7487951544573401,
+          0.010675159683810522
+        ]
+      },
+      "obf_clinical_scores_only": {
+        "split": 0.5661375661375662,
+        "cv": [
+          0.6995547062146557,
+          0.012873504370204798
+        ]
+      },
+      "physio_all": {
+        "split": 0.8266590389016018,
+        "cv": [
+          0.8375854919548568,
+          0.011017763062164756
+        ]
+      },
+      "physio_without_clinical_scores": {
+        "split": 0.7222222222222223,
+        "cv": [
+          0.7467123802771071,
+          0.0175478897236923
+        ]
+      },
+      "fusion_all": {
+        "split": 0.825925925925926,
+        "cv": [
+          0.828379614004243,
+          0.012329927120323988
+        ]
+      },
+      "fusion_without_clinical_scores": {
+        "split": 0.7237538290169869,
+        "cv": [
+          0.7664569235101972,
+          0.010532540067264395
+        ]
+      }
+    },
+    "A4_test_rows_with_exact_duplicate_in_train": {
+      "text": 0.0,
+      "physio": 0.0,
+      "wesad_block": 0.0
+    }
+  },
+  "B1_wesad": {
+    "n_subjects": 15,
+    "n_windows": 86868,
+    "condition_x_state": {
+      "Depression": {
+        "amusement": 0,
+        "baseline": 17611,
+        "ignore_5": 0,
+        "ignore_6": 790,
+        "ignore_7": 0,
+        "meditation": 0,
+        "stress": 0,
+        "transient": 0
+      },
+      "Euthymia": {
+        "amusement": 5575,
+        "baseline": 0,
+        "ignore_5": 0,
+        "ignore_6": 0,
+        "ignore_7": 0,
+        "meditation": 0,
+        "stress": 0,
+        "transient": 39507
+      },
+      "Mania": {
+        "amusement": 0,
+        "baseline": 0,
+        "ignore_5": 0,
+        "ignore_6": 0,
+        "ignore_7": 0,
+        "meditation": 11806,
+        "stress": 9966,
+        "transient": 0
+      },
+      "dropped": {
+        "amusement": 0,
+        "baseline": 0,
+        "ignore_5": 789,
+        "ignore_6": 0,
+        "ignore_7": 824,
+        "meditation": 0,
+        "stress": 0,
+        "transient": 0
+      }
+    }
+  }
+}
