@@ -17,5 +17,4 @@ data/
 *.npy
 
 # Paper build artifacts
-methods-paper/figures/*.pdf
 methods-paper/figures/*.png
