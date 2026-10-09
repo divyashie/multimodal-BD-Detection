@@ -1,7 +1,8 @@
 {
   "meta": {
     "started": "2026-10-04 16:25",
-    "smoke_test": false
+    "smoke_test": false,
+    "finished": "2026-10-04 16:57"
   },
   "A": {
     "shapes": {
@@ -163,5 +164,338 @@
         "transient": 0
       }
     }
+  },
+  "B2_obf": {
+    "n_rows": 1059,
+    "n_fully_imputed_rows": 78,
+    "gmm_counts": [
+      900,
+      112,
+      47
+    ],
+    "recover_gmm_from_clinical_scores_only": {
+      "row_cv": [
+        0.7903713710562515,
+        0.009286303637805483
+      ],
+      "subject_grouped_cv": [
+        0.7928577948176248,
+        0.005080220886947036
+      ]
+    },
+    "recover_gmm_from_actigraphy_only": {
+      "row_cv": [
+        0.6936826045349667,
+        0.0021826650237606916
+      ],
+      "subject_grouped_cv": [
+        0.6945096188304203,
+        0.003296205187571721
+      ]
+    },
+    "recover_gmm_from_all_8": {
+      "row_cv": [
+        0.9382328379024312,
+        0.009515966725636768
+      ],
+      "subject_grouped_cv": [
+        0.9438868348008981,
+        0.003146892477458302
+      ]
+    },
+    "diagnosis_x_gmm": {
+      "0": {
+        "<missing>": 78,
+        "control": 325,
+        "depression": 236,
+        "schizophrenia": 261
+      },
+      "1": {
+        "<missing>": 38,
+        "control": 40,
+        "depression": 32,
+        "schizophrenia": 2
+      },
+      "2": {
+        "<missing>": 46,
+        "control": 1,
+        "depression": 0,
+        "schizophrenia": 0
+      }
+    },
+    "ARI_diagnosis_vs_gmm": 0.058629487742544104,
+    "diagnosis_from_actigraphy_subject_grouped": [
+      0.6449963524653913,
+      0.009891510017694474
+    ],
+    "source_file_order": [
+      "features.csv",
+      "control-info.csv",
+      "adhd-info.csv",
+      "clinical-info.csv",
+      "depression-info.csv",
+      "schizophrenia-info.csv"
+    ]
+  },
+  "B3_text": {
+    "kaggle_cluster_counts": [
+      451,
+      369,
+      872
+    ],
+    "kaggle_labels_recovered_by_nearest_centroid": 1.0,
+    "source_x_label": {
+      "Depression": {
+        "kaggle_bd_reddit": 369,
+        "multiclass_twitter": 6940
+      },
+      "Euthymia": {
+        "kaggle_bd_reddit": 451,
+        "multiclass_twitter": 1985
+      },
+      "Mania": {
+        "kaggle_bd_reddit": 872,
+        "multiclass_twitter": 2312
+      }
+    },
+    "source_identity_probe_cv": [
+      0.9357353692958655,
+      0.0
+    ],
+    "label_from_source_only_f1": 0.36869319400067724
+  },
+  "B4_replication": {
+    "wesad_duplicate_rate": 0.2907994130753764,
+    "n_fused": 141,
+    "text_only_full_corpus": 0.8284063758750029,
+    "physio_only": 0.8919701213818861,
+    "fusion": 0.8978000556947925
+  },
+  "B5_leakage": {
+    "test_rows_same_wesad_subject_in_train": 1.0,
+    "test_rows_same_wesad_window_in_train": 0.0,
+    "test_rows_wesad_window_within_5s_in_train": 0.06896551724137931,
+    "test_rows_same_obf_person_in_train": 0.0,
+    "wesad_random_window_cv": [
+      0.9510888995780789,
+      0.0005667252126688727
+    ],
+    "wesad_leave_one_subject_out": 0.5316205376261768
+  },
+  "B6_waterfall": {
+    "S0 reported protocol (single split, build 42)": {
+      "fusion": 0.8978000556947925
+    },
+    "S1 repeated CV (same features)": {
+      "fusion": [
+        0.8477565574164654,
+        0.012286937364933635
+      ],
+      "text_only": [
+        0.7669849394141988,
+        0.03186601401816184
+      ],
+      "physio_only": [
+        0.8584045309228419,
+        0.018402189160347027
+      ],
+      "fusion_within_class_shuffle": [
+        0.8459148730796027,
+        0.018416604468619417
+      ],
+      "fusion_across_class_shuffle": [
+        0.7629849508619351,
+        0.025781606153172154
+      ]
+    },
+    "S2 + clinical scores removed": {
+      "fusion": [
+        0.7917415875456097,
+        0.017593464243192854
+      ],
+      "text_only": [
+        0.7669849394141988,
+        0.03186601401816184
+      ],
+      "physio_only": [
+        0.789311361319452,
+        0.026682463338822845
+      ],
+      "fusion_within_class_shuffle": [
+        0.7916205974607957,
+        0.02380537972259912
+      ],
+      "fusion_across_class_shuffle": [
+        0.7634804028934986,
+        0.02648622887193703
+      ]
+    },
+    "S3 + grouped by WESAD subject": {
+      "fusion": [
+        0.7767963400882013,
+        0.030007379364425078
+      ],
+      "text_only": [
+        0.7505082017834639,
+        0.03723911949128139
+      ],
+      "physio_only": [
+        0.729349187801489,
+        0.033998246635496575
+      ],
+      "fusion_within_class_shuffle": [
+        0.7783451583285401,
+        0.031097389215766866
+      ],
+      "fusion_across_class_shuffle": [
+        0.7591611504812198,
+        0.03332759453706568
+      ]
+    },
+    "S3b + grouped by OBF person (alt.)": {
+      "fusion": [
+        0.7862602276118649,
+        0.024118325476770952
+      ],
+      "text_only": [
+        0.7568368815497726,
+        0.04283556737194292
+      ],
+      "physio_only": [
+        0.7887465678195198,
+        0.02432793168781603
+      ],
+      "fusion_within_class_shuffle": [
+        0.7866677724616056,
+        0.03227069638264123
+      ],
+      "fusion_across_class_shuffle": [
+        0.7523727779046817,
+        0.032841155872706335
+      ]
+    }
+  },
+  "B7_calibration": {
+    "n_test": 29,
+    "original_protocol": {
+      "uncalibrated_bins5": {
+        "ece": 0.32258620689655165,
+        "ci95": [
+          0.21948275862068967,
+          0.4253491379310344
+        ]
+      },
+      "uncalibrated_bins10": {
+        "ece": 0.3225862068965517,
+        "ci95": [
+          0.21475431034482761,
+          0.4193491379310345
+        ]
+      },
+      "uncalibrated_bins15": {
+        "ece": 0.3225862068965517,
+        "ci95": [
+          0.234823275862069,
+          0.4115603448275863
+        ]
+      },
+      "isotonic_fit_on_train_bins5": {
+        "ece": 0.11729448101329543,
+        "ci95": [
+          0.045107940483773715,
+          0.21724604423608426
+        ]
+      },
+      "isotonic_fit_on_train_bins10": {
+        "ece": 0.14433226278759248,
+        "ci95": [
+          0.0955885564731346,
+          0.25596651142258625
+        ]
+      },
+      "isotonic_fit_on_train_bins15": {
+        "ece": 0.18738986485015016,
+        "ci95": [
+          0.13330756711453917,
+          0.28936707022583813
+        ]
+      }
+    },
+    "heldout_cv_calibrated_ece10": {
+      "mean": 0.10444285771646807,
+      "p2.5": 0.04671639137923461,
+      "p97.5": 0.16047141942962426
+    }
+  },
+  "B8_source_audit": {
+    "actigraphy_class0_unique": 45,
+    "actigraphy_class1_unique": 28,
+    "actigraphy_class2_unique": 2,
+    "clinical_class0_unique": 1,
+    "clinical_class1_unique": 20,
+    "clinical_class2_unique": 47,
+    "label_from_missingness_mask": [
+      0.542489021658092,
+      0.005431189817065511
+    ]
+  },
+  "B9_join": {
+    "features_people": 77,
+    "features_rows": 897,
+    "info_people": 162,
+    "key_overlap": 77
+  },
+  "S6": {
+    "filter": {
+      "person_days_raw": 2206,
+      "person_days_kept": 1785,
+      "dropped_incomplete": 335,
+      "dropped_dup_timestamps": 6,
+      "dropped_zero_activity": 87
+    },
+    "recipe_validation_membership": {
+      "control_1": 1.0,
+      "control_10": 1.0,
+      "control_11": 1.0,
+      "control_12": 1.0,
+      "control_13": 1.0
+    },
+    "diagnosis_5class_subject_grouped": [
+      0.3142074111616572,
+      0.008008222192146525
+    ],
+    "diagnosis_5class_random_rows": [
+      0.40025213590314357,
+      0.0038042873872658057
+    ],
+    "diagnosis_3class_subject_grouped": [
+      0.5225307744381676,
+      0.01573282574116219
+    ],
+    "positive_control_obf": {
+      "actigraphy_only": 0.49357042014912295,
+      "scales_only": 0.7331836718023184,
+      "fusion_aligned": 0.7316702902110871,
+      "fusion_within_class_shuffle": [
+        0.7258345267637905,
+        0.02654257574713559
+      ],
+      "fusion_across_class_shuffle": [
+        0.4856309826232822,
+        0.07213669594450718
+      ]
+    },
+    "wesad_chest_wrist_aligned": [
+      0.44631043945476184,
+      0.013474047375753126
+    ],
+    "wesad_chest_wrist_withincell": [
+      0.45944885230464566,
+      0.003985529815479159
+    ],
+    "wesad_chest_wrist_naive_shuffle_LEAKY": [
+      0.6107685298653568,
+      0.014362871313837967
+    ]
   }
 }
