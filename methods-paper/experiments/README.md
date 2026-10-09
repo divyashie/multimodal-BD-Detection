@@ -58,3 +58,15 @@ source. The first run takes roughly an hour; later runs are much faster.
 
 Every number in the paper traces to `results.json` or `section6.json`. The figures can be redrawn
 from those files without re-running anything.
+
+## A note on comparing the two runs
+
+`run_complete` was produced after pinning `KMeans(n_init=10)` in the text-labelling
+step. That pin changes which posts fall into which cluster, so the text labels differ
+between the two runs and the text-side figures (B3, B4, B6, B7) are not directly
+comparable. The notebook has since been reverted to the library default, under which
+the original result reproduces.
+
+The paper cites `run_complete` only for WESAD-derived results — the condition-by-state
+counts, leave-one-subject-out performance, and the chest/wrist positive control — none
+of which involve the text pipeline.
